@@ -1,0 +1,45 @@
+import numpy as np
+
+batch_size = 50
+input_dimension = 8
+hidden_dimension = 4
+output_dimension = 1
+epoch = 1000
+learning_rate = 0.001
+
+data_input = np.random.randn(batch_size, input_dimension)
+data_output = np.random.randn(batch_size, output_dimension)
+
+real_pred = 1 / (1 + np.exp(-data_output))
+
+weight_ih = 0.5 * np.random.randn(input_dimension, hidden_dimension)
+weight_ho = 0.5 * np.random.randn(hidden_dimension, output_dimension)
+
+unit = np.ones((batch_size, 1))
+tmp1 = np.random.randn(1, hidden_dimension)
+tmp2 = np.random.randn(1, output_dimension)
+bias_ih = unit.dot(tmp1)
+bias_ho = unit.dot(tmp2)
+
+for _ in range(epoch):
+    recent_hidden = data_input.dot(weight_ih) + bias_ih
+    recent_relu_hidden = np.maximum(recent_hidden, 0)
+    recent_output = recent_relu_hidden.dot(weight_ho) + bias_ho
+
+    recent_pred = 1 / (1 + np.exp(-recent_output))
+    loss = -np.multiply(real_pred, np.log(recent_pred)).sum() - np.multiply(1 - real_pred, np.log(1 - recent_pred)).sum()
+    print(_, loss)
+
+    gradient_recent_pred = -real_pred / recent_pred + (1 - real_pred) / (1 - recent_pred)
+    gradient_weight_ho = recent_relu_hidden.T.dot(gradient_recent_pred)
+    gradient_bias_ho = unit.T.dot(gradient_recent_pred)
+    gradient_hidden = gradient_recent_pred.dot(weight_ho.T)
+    gradient_hidden[gradient_hidden < 0] = 0
+    gradient_hidden[gradient_hidden > 0] = 1
+    gradient_weight_ih = data_input.T.dot(gradient_hidden)
+    gradient_bias_ih = unit.T.dot(gradient_hidden)
+
+    weight_ih -= learning_rate * gradient_weight_ih
+    weight_ho -= learning_rate * gradient_weight_ho
+    bias_ih -= learning_rate * gradient_bias_ih
+    bias_ho -= learning_rate * gradient_bias_ho
